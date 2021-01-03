@@ -1,47 +1,49 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
-
-	"database/sql"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
-type item struct {
-	id       int    `json:"id"`
-	name     string `json:"name"`
-	category string `json:"category"`
+type dailyItem struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Category string `json:"category"`
+}
+
+func gormConnect() *gorm.DB {
+	DBMS := "mysql"
+	USER := "root"
+	PASS := "mysql"
+	PROTOCOL := "tcp(127.0.0.1:3306)"
+	DBNAME := "mysql"
+
+	CONNECT := USER + ":" + PASS + "@" + PROTOCOL + "/" + DBNAME
+	db, err := gorm.Open(DBMS, CONNECT)
+
+	if err != nil {
+		panic(err.Error())
+	}
+	return db
 }
 
 func main() {
 	// DB settings
-	db, err := sql.Open("mysql", "root:mysql@tcp(127.0.0.1:3306)/mysql")
-	if err != nil {
-		panic(err.Error())
-	}
+	db := gormConnect()
 	defer db.Close()
 
 	// API settings
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
-		rows, err := db.Query("SELECT * FROM daily_items")
-		if err != nil {
-			panic(err.Error())
-		}
-		var items []item
-		for rows.Next() {
-			item := item{}
-			if err := rows.Scan(&item.id, &item.name, &item.category); err != nil {
-				panic(err.Error())
-			}
-			items = append(items, item)
-		}
-		fmt.Println(items)
-		return c.JSON(http.StatusOK, items)
+		// create instance of item struct
+		itemsEx := []dailyItem{}
+
+		db.Find(&itemsEx)
+
+		return c.JSON(http.StatusOK, itemsEx)
 	})
 
 	// API port listen
