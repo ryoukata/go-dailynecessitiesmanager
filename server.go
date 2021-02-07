@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 type dailyItem struct {
@@ -37,6 +38,7 @@ func main() {
 
 	// API settings
 	e := echo.New()
+	e.Use(middleware.CORS())
 	e.GET("/", func(c echo.Context) error {
 		// create instance of item struct
 		itemsEx := []dailyItem{}
